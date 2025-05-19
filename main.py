@@ -1,13 +1,20 @@
 from fastapi import FastAPI, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 import shutil
 import os
 
 app = FastAPI()
-
-# Load both models
-weapon_model = YOLO("weapon_model.pt")  # Your existing weapon detection model
-drug_model = YOLO("drug_model.pt")      # Your new illegal drug detection model
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# Load trained YOLOv9 model
+weapon_model = YOLO("weapon_model.pt")
+drug_model = YOLO("drug_model.pt")
 
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
@@ -29,10 +36,10 @@ async def predict(file: UploadFile = File(...)):
 
     # Decide response
     if weapon_detected and drug_detected:
-        return {"status": "Illegal weapon and drug detected ❌🧨"}
+        return {"status": "Illegal weapon and drug detected"}
     elif weapon_detected:
-        return {"status": "Illegal weapon detected 🔫❌"}
+        return {"status": "Illegal weapon detected"}
     elif drug_detected:
-        return {"status": "Illegal drug detected 💊❌"}
+        return {"status": "Illegal drug detected"}
     else:
-        return {"status": "No illegal items detected ✅"}
+        return {"status": "NO"}
