@@ -5,8 +5,9 @@ import os
 
 app = FastAPI()
 
-# Load your trained YOLOv9 model
-model = YOLO("best.pt")  # make sure best.pt is inside your project
+# Load both models
+weapon_model = YOLO("weapon_model.pt")  # Your existing weapon detection model
+drug_model = YOLO("drug_model.pt")      # Your new illegal drug detection model
 
 @app.post("/predict/")
 async def predict(file: UploadFile = File(...)):
@@ -15,17 +16,23 @@ async def predict(file: UploadFile = File(...)):
     with open(temp_file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Run prediction
-    results = model.predict(temp_file_path, conf=0.5)
-    detections = results[0].boxes
+    # Run both predictions
+    weapon_results = weapon_model.predict(temp_file_path, conf=0.5)
+    drug_results = drug_model.predict(temp_file_path, conf=0.5)
 
-    # Analyze detections
-    item_detected = len(detections) > 0
+    # Get detection results
+    weapon_detected = len(weapon_results[0].boxes) > 0
+    drug_detected = len(drug_results[0].boxes) > 0
 
     # Clean up temp file
     os.remove(temp_file_path)
 
-    if item_detected:
-        return {"status": "Illegal item detected ✅"}
+    # Decide response
+    if weapon_detected and drug_detected:
+        return {"status": "Illegal weapon and drug detected ❌🧨"}
+    elif weapon_detected:
+        return {"status": "Illegal weapon detected 🔫❌"}
+    elif drug_detected:
+        return {"status": "Illegal drug detected 💊❌"}
     else:
-        return {"status": "No illegal item detected ❌"}
+        return {"status": "No illegal items detected ✅"}
