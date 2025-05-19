@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 RUN apt-get update && apt-get install -y python3-opencv
 RUN pip install opencv-python
+RUN pip install python-multipart
 
 # Copy the rest of your application code into the container
 COPY . .
